@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
     nginx:
         image: nginx:latest
@@ -7,6 +9,7 @@ services:
         volumes:
             - ./gateway/nginx.conf:/etc/nginx/nginx.conf
         depends_on:
+            - frontend
             - auth-service
             - product-service
             - order-service
@@ -16,13 +19,26 @@ services:
         networks:
             - app-network
 
+    frontend:
+        build:
+            context: ./frontend/ecommerce
+            dockerfile: Dockerfile
+        container_name: frontend
+        volumes:
+            - ./frontend/ecommerce:/app
+            - /app/node_modules
+        ports:
+            - '3000:5173'
+        networks:
+            - app-network
+
     auth-service:
         build:
-            context: ./services/auth-service
+            context: ./backend/auth-service
             dockerfile: ../../docker/node.Dockerfile
         container_name: auth-service
         volumes:
-            - ./services/auth-service:/app
+            - ./backend/auth-service:/app
             - /app/node_modules
         ports:
             - '5001:5000'
@@ -37,11 +53,11 @@ services:
 
     product-service:
         build:
-            context: ./services/product-service
+            context: ./backend/product-service
             dockerfile: ../../docker/node.Dockerfile
         container_name: product-service
         volumes:
-            - ./services/product-service:/app
+            - ./backend/product-service:/app
             - /app/node_modules
         ports:
             - '5002:5000'
@@ -52,11 +68,11 @@ services:
 
     order-service:
         build:
-            context: ./services/order-service
+            context: ./backend/order-service
             dockerfile: ../../docker/node.Dockerfile
         container_name: order-service
         volumes:
-            - ./services/order-service:/app
+            - ./backend/order-service:/app
             - /app/node_modules
         ports:
             - '5003:5000'
@@ -71,11 +87,11 @@ services:
 
     payment-service:
         build:
-            context: ./services/payment-service
+            context: ./backend/payment-service
             dockerfile: ../../docker/node.Dockerfile
         container_name: payment-service
         volumes:
-            - ./services/payment-service:/app
+            - ./backend/payment-service:/app
             - /app/node_modules
         ports:
             - '5004:5000'
@@ -90,11 +106,11 @@ services:
 
     cart-service:
         build:
-            context: ./services/cart-service
+            context: ./backend/cart-service
             dockerfile: ../../docker/node.Dockerfile
         container_name: cart-service
         volumes:
-            - ./services/cart-service:/app
+            - ./backend/cart-service:/app
             - /app/node_modules
         ports:
             - '5005:5000'
@@ -105,14 +121,30 @@ services:
 
     notification-service:
         build:
-            context: ./services/notification-service
+            context: ./backend/notification-service
             dockerfile: ../../docker/node.Dockerfile
         container_name: notification-service
         volumes:
-            - ./services/notification-service:/app
+            - ./backend/notification-service:/app
             - /app/node_modules
         ports:
             - '5006:5000'
+        env_file:
+            - .env
+        depends_on:
+            - rabbitmq
+        networks:
+            - app-network
+    inventory-service:
+        build:
+            context: ./backend/inventory-service
+            dockerfile: ../../docker/node.Dockerfile
+        container_name: inventory-service
+        volumes:
+            - ./backend/inventory-service:/app
+            - /app/node_modules
+        ports:
+            - '5007:5000'
         env_file:
             - .env
         depends_on:
